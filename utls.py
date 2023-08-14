@@ -1,7 +1,8 @@
 from requests import get
+import json
 
-def getPdfNames() -> set[str]:
-    fileNames = set() 
+def getPdfNames() -> list[str]:
+    fileNames = []
     res = get("https://ia601606.us.archive.org/13/items/al-arabi-magazine/al-arabi-magazine_files.xml")
 
     cont = res.content.decode()
@@ -15,10 +16,14 @@ def getPdfNames() -> set[str]:
         end = getStr(cont, (index := index+12))
         fileName = cont[index:end]
         if fileName.endswith(".pdf"):
-            fileNames.add(fileName)
+            fileNames.append(fileName)
 
         index = end + 1
     return fileNames
+
+def writePdfNames(pdfs: list[str]):
+    with open("./al-arabi-magazine.json", "w") as f: f.write(json.dumps(pdfs))
+
 
 def getStr(text: str, start: int) -> int:
     while True:
@@ -27,4 +32,3 @@ def getStr(text: str, start: int) -> int:
 
 def write(file: str, text: bytes):
     with open(file, 'wb') as f: f.write(text)
-
