@@ -1,34 +1,31 @@
-from asyncio import get_event_loop
-import requests
 from os import getcwd
 from os.path import exists, join
+from json import load
+from requests import get
+from utls import write, getPdfNames, writePdfNames
 
+source = "https://ia601606.us.archive.org/13/items/al-arabi-magazine/" 
 
-url = "https://ia601606.us.archive.org/13/items/al-arabi-magazine/" 
-fileName = "العربي%20-%20{}.pdf"
-cdir = getcwd()
-date = 1958
+def getFileNames(cdir: str) -> list[str]:
+    if exists(path := join(cdir, "al-arabi-magazine.json")):
+        with open(path, "r") as f: return load(f)
+    
+    writePdfNames(fileNames := getPdfNames())
+    return fileNames
 
-async def get(url):
-    loop = get_event_loop()
-    return await loop.run_in_executor(None, requests.get, url)
+def main():
+    cdir = getcwd()
+    for fileName in getFileNames(cdir):
+        if exists(join(cdir, fileName)): continue
+        
+        print("started downloading: " + fileName, end='')
 
-async def write(file, response):
-    with open(file, 'wb') as f: f.write(response.content)
+        response = get(source + fileName)
+        write(join("arch", fileName), response.content)
 
-async def main():
-    for inc in range(33):
-        name = fileName.format(date + inc)
-        if exists(join(cdir, name)): continue
+        print("\tfinished")
 
-        print("started downloading: " + name)
-
-        response = await get(url + name)
-        await write(name, response)
-
-        print("finished")
     print("done")
 
 
-loop = get_event_loop()
-loop.run_until_complete(main())
+if __name__ == "__main__": main()
